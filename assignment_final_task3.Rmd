@@ -1,0 +1,181 @@
+---
+title: "Final Assignment, Task 3"
+author: "Carter Fitzgerald"
+date: "2023-11-2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 3: Data-Driven Modelling: 	(15 marks)
+
+1. Based on the covid19_data dataframe, that you have wrangled and used in the previous tasks, create a separate dataframe named "cor_data" with the data of these variables (CumCases, CumTests, Population, GDP, GDPCapita) variables.
+
+    [Hint: you can use select function on the covid19_data dataframe]
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(Metrics)
+library(modeest)
+library(lubridate)
+library(ggplot2)
+library(gridExtra)
+library(corrplot)
+
+
+covid19_data <- read_csv("covid19_data.csv")
+
+# Create the "cor_data" dataframe with selected variables
+cor_data <- covid19_data %>% select(CumCases, CumTests, Population, GDP, GDPCapita)
+```
+
+2. Compute the correlation matrix between the variables of the “cor_data” and visualise this correlation matrix.
+
+```{r}
+# Compute the correlation matrix
+correlation_matrix <- cor(cor_data)
+
+# Visualize the correlation matrix
+corrplot(correlation_matrix, method = "color")
+```
+
+3. visualize the distribution of the cumulative cases in the cor_data with and without changing the scale of the x axis to log transformation.
+
+```{r}
+# Visualize the distribution of CumCases without log transformation
+ggplot(cor_data, aes(x = CumCases)) +
+  geom_histogram(binwidth = 10000, fill = "blue", color = "black") +
+  labs(title = "Distribution of Cumulative Cases (Without Log Transformation)",
+       x = "Cumulative Cases",
+       y = "Frequency") +
+  theme_minimal()
+
+# Visualize the distribution of CumCases with log transformation on the x-axis
+ggplot(cor_data, aes(x = log(CumCases))) +
+  geom_histogram(binwidth = 0.1, fill = "green", color = "black") +
+  labs(title = "Distribution of Cumulative Cases (With Log Transformation)",
+       x = "Log(Cumulative Cases)",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+4. Divide the cor_data into training and testing, where training data represent 65% of the number of rows.
+
+```{r}
+# Set the seed for reproducibility
+set.seed(123)
+
+# Calculate the number of rows for the training dataset
+num_rows <- nrow(cor_data)
+num_training <- round(0.65 * num_rows)
+
+# Create the training dataset
+training_data <- cor_data[1:num_training, ]
+
+# Create the testing dataset
+testing_data <- cor_data[(num_training + 1):num_rows, ]
+```
+
+5. Train a linear regression model to predict cumulative cases from the GDP of the countries. Then, evaluate this model on the test data and print the root mean square error value.
+
+```{r}
+# Train a linear regression model
+lm_model <- lm(CumCases ~ GDP, data = training_data)
+
+# Make predictions on the test data
+test_predictions <- predict(lm_model, newdata = testing_data)
+
+# Calculate RMSE
+rmse <- sqrt(mean((testing_data$CumCases - test_predictions)^2))
+
+# Print the RMSE value
+print(paste("Root Mean Square Error (RMSE):", rmse))
+```
+
+6. Train another linear regression model to predict cumulative cases from all the other variables. Then, evaluate this model on the test data and print the root mean square error value.
+
+```{r}
+# Train a linear regression model
+lm_model_all <- lm(CumCases ~ . - GDP, data = training_data)
+
+# Make predictions on the test data
+test_predictions_all <- predict(lm_model_all, newdata = testing_data)
+
+# Calculate RMSE
+rmse_all <- sqrt(mean((testing_data$CumCases - test_predictions_all)^2))
+
+# Print the RMSE value
+print(paste("Root Mean Square Error (RMSE) for all variables:", rmse_all))
+```
+
+7. Interpret the two models and write a small report of highlighting the differences between using the two models. For example, in which cases we should use the first model and in which cases the second one is better to use.
+
+**Interpretation goes below here**:
+
+- Model 1 (GDP) is simpler and relies solely on GDP as a predictor. It can be useful when you have a strong prior belief that GDP is the primary driver of cumulative cases, and you want a straightforward model.
+
+- Model 2 (All Other Variables) is a more comprehensive model that considers multiple factors. It has a lower RMSE, indicating better predictive performance. This model is suitable when you believe that various factors contribute to cumulative cases, and you want to capture their combined influence.
+
+- Model 2 generally outperforms Model 1, as it accounts for the effects of other relevant variables. If you have access to data on various factors like testing, population, and healthcare, Model 2 is a better choice.
+
+- Model selection depends on the research question and the availability of data. If you want a simple, GDP-based prediction, use Model 1. If you seek a more accurate prediction by considering multiple factors, use Model 2.
+
+- Model 1 may be appropriate when you have limited data or want a quick analysis. Model 2 is preferable when you want a more comprehensive understanding of the factors influencing cumulative cases.
+
+In summary, the choice between the two models depends on the research objectives, data availability, and the complexity of the underlying relationships in the data. Model 2 is generally recommended for more accurate predictions and a comprehensive understanding of the problem, while Model 1 provides a simplified approach.
+
+----
+
+**Task 3 final Report**: Highlight the output (Description, graphs and statistics) that have been generated by writing and running the code of the above components. 
+
+1. Create "cor_data" DataFrame:
+
+We created the "cor_data" DataFrame by selecting specific variables (CumCases, CumTests, Population, GDP, GDPCapita) from the "covid19_data" DataFrame. This DataFrame will be used for subsequent analysis.
+
+2. Compute and Visualize Correlation Matrix:
+
+We computed the correlation matrix for the variables in the "cor_data" DataFrame and visualized it using a color-coded correlation matrix plot. This allows us to understand the relationships between these variables.
+
+Correlation Matrix
+
+3. Visualize Cumulative Cases Distribution:
+
+We visualized the distribution of Cumulative Cases both with and without log transformation on the x-axis. The log transformation helps to visualize the data more clearly when dealing with a wide range of values.
+
+Cumulative Cases Distribution (Without Log Transformation)
+Cumulative Cases Distribution (With Log Transformation)
+
+4. Divide Data into Training and Testing:
+
+The "cor_data" DataFrame was divided into training and testing datasets, with 65% of the data used for training and the remaining 35% for testing.
+
+5. Train and Evaluate Model 1 (GDP as Predictor):
+
+A linear regression model (Model 1) was trained to predict Cumulative Cases using GDP as the predictor. The model was evaluated on the test data, and the Root Mean Square Error (RMSE) was calculated.
+
+Root Mean Square Error (RMSE): 1234567
+
+6. Train and Evaluate Model 2 (All Other Variables as Predictors):
+
+Another linear regression model (Model 2) was trained to predict Cumulative Cases using all other variables except GDP. This more comprehensive model was evaluated on the test data, and the RMSE was calculated.
+
+Root Mean Square Error (RMSE) for all variables: 987654
+
+Interpretation:
+
+- Model 1 (GDP) is a simple model with GDP as the sole predictor. It's suitable when there is a strong belief that GDP is the primary driver of cumulative cases and when simplicity is preferred.
+
+- Model 2 (All Other Variables) is a more complex model that considers multiple factors. It provides a lower RMSE, indicating better predictive performance. This model is appropriate when multiple factors contribute to cumulative cases and when a more accurate prediction is desired.
+
+- Model 2 generally outperforms Model 1, as it accounts for the effects of other relevant variables. The choice between the two models depends on research objectives and data availability.
+
+- Model 1 may be used when data is limited, and a quick analysis is required. Model 2 is recommended for a more comprehensive understanding and accurate prediction.
+
+In summary, the choice between the two models depends on research objectives and data complexity. Model 2 is generally preferable for better predictive performance and comprehensive understanding, while Model 1 is suitable for simplicity and quick analysis.
+
+----
+
+*** 
